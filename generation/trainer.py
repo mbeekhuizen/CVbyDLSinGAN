@@ -23,7 +23,7 @@ class Trainer():
         if self.args.use_tb:
             self.tb = RecoderX(log_dir=args.save_path)
 
-    def _init_models(self, loader):
+    def _init_models(self, loader, loader2):
         # number of features
         max_features = min(self.args.max_features * pow(2, math.floor(self.scale / 4)), 128)
         min_features = min(self.args.min_features * pow(2, math.floor(self.scale / 4)), 128)
@@ -50,6 +50,7 @@ class Trainer():
             self.g_model.scale_factor = self.args.scale_factor
             self.init_generator = False
             loader.dataset.amps = {'s0': torch.tensor(1.).to(self.args.device)}
+            loader2.dataset.amps = {'s0': torch.tensor(1.).to(self.args.device)}
         else:
             # add amp
             data = next(iter(loader))
@@ -63,6 +64,19 @@ class Trainer():
             z = z[:, :, 0:reals[next_key].size(2), 0:reals[next_key].size(3)]
             a = self.args.noise_weight * torch.sqrt(F.mse_loss(z, reals[next_key]))
             loader.dataset.amps.update({next_key: a.to(self.args.device)})
+
+
+            data = next(iter(loader2))
+            amps = data['amps']
+            reals = data['reals']
+            noises = data['noises']
+            keys = list(reals.keys())
+            next_key = keys[keys.index(self.key) + 1]
+            z = self.g_model(reals, amps, noises)
+            z = imresize(z.detach(), 1. / self.g_model.scale_factor)
+            z = z[:, :, 0:reals[next_key].size(2), 0:reals[next_key].size(3)]
+            a = self.args.noise_weight * torch.sqrt(F.mse_loss(z, reals[next_key]))
+            loader2.dataset.amps.update({next_key: a.to(self.args.device)})
 
             # add scale
             self.g_model.add_scale(self.args.device)
@@ -142,9 +156,9 @@ class Trainer():
         # set noises
         loader.dataset.noises = self._set_noises(loader.dataset.reals)
 
-    def _init_local(self, loader):    
+    def _init_local(self, loader, loader2):
         # initialize models
-        self._init_models(loader)
+        self._init_models(loader, loader2)
 
         # initialize optimization
         self._init_optim()
@@ -367,7 +381,7 @@ class Trainer():
         mkdir(directory)
         save_image_grid(image.data.cpu(), save_path)
 
-    def _train_single_scale(self, loader):
+    def _train_single_scale(self, loader, loader2):
         # run step iterations
         logging.info('\nScale #{}'.format(self.scale + 1))
         for self.step in range(self.args.num_steps + 1):
@@ -389,6 +403,27 @@ class Trainer():
         self.step += 1
         self._sample_iteration(loader)
 
+        # run step iterations
+        logging.info('\nScale #{}'.format(self.scale + 1))
+        for self.step in range(self.args.num_steps + 1):
+            # train
+            self._train_iteration(loader2)
+
+            # scheduler
+            self.g_scheduler.step(epoch=self.step)
+            self.d_scheduler.step(epoch=self.step)
+
+            # evaluation
+            if (self.step % self.args.eval_every == 0) or (self.step == self.args.num_steps):
+                # eval
+                self.g_model.eval()
+                self._eval_iteration(loader2)
+                self.g_model.train()
+
+        # sample last
+        self.step += 1
+        self._sample_iteration(loader2)
+
     def _print_stats(self, loader):
         reals = loader.dataset.reals
         amps = loader.dataset.amps
@@ -399,16 +434,19 @@ class Trainer():
 
     def train(self):
         # get loader
-        loader = get_loader(self.args)
+        loader, loader2 = get_loader(self.args)
         
-        # initialize global
+        # initialize global for both datasets
         self._init_global(loader)
+        self._init_global(loader2)
 
         # iterate scales
         for self.scale in range(self.args.stop_scale + 1):
+            print(self.args.stop_scale)
+        #for self.scale in range(3):
             # initialize local
-            self._init_local(loader)
-            self._train_single_scale(loader)
+            self._init_local(loader, loader2)
+            self._train_single_scale(loader, loader2)
             self._save_models()
 
         # save last

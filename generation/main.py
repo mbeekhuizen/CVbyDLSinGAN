@@ -23,7 +23,8 @@ def get_arguments():
     parser.add_argument('--kernel-size', default=3, type=int, help=' (default: 3)')
     parser.add_argument('--padding', default=0, type=int, help=' (default: 0)')
     
-    parser.add_argument('--root', default='', help='image source')
+    parser.add_argument('--root1', default='', help='first image source')
+    parser.add_argument('--root2', default='', help='second image source')
     parser.add_argument('--min-size', default=25, type=int, help='minimum scale size (default: 25)')
     parser.add_argument('--max-size', default=250, type=int, help='maximum scale size  (default: 250)')
     parser.add_argument('--scale-factor-init', default=0.75, type=float, help='initilize scaling factor (default: 0.75)')
