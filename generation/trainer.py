@@ -405,7 +405,7 @@ class Trainer():
 
         # run step iterations
         logging.info('\nScale #{}'.format(self.scale + 1))
-        for self.step in range(self.args.num_steps + 1):
+        for self.step in range(self.args.num_steps, 2*self.args.num_steps + 1):
             # train
             self._train_iteration(loader2)
 
@@ -454,6 +454,7 @@ class Trainer():
 
         # print stats
         self._print_stats(loader)
+        self._print_stats(loader2)
 
         # close tensorboard
         if self.args.use_tb:
