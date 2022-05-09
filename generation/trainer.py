@@ -384,45 +384,43 @@ class Trainer():
     def _train_single_scale(self, loader, loader2):
         # run step iterations
         logging.info('\nScale #{}'.format(self.scale + 1))
-        for self.step in range(self.args.num_steps + 1):
-            # train
-            self._train_iteration(loader)
+        for self.step in range(self.args.num_steps):
+            #If step is even, train on the first image:
+            if self.step % 2 == 0:
+                # train
+                self._train_iteration(loader)
 
-            # scheduler
-            self.g_scheduler.step(epoch=self.step)
-            self.d_scheduler.step(epoch=self.step)
+                # scheduler
+                self.g_scheduler.step(epoch=self.step)
+                self.d_scheduler.step(epoch=self.step)
 
-            # evaluation
-            if (self.step % self.args.eval_every == 0) or (self.step == self.args.num_steps):
-                # eval
-                self.g_model.eval()
-                self._eval_iteration(loader)
-                self.g_model.train()
+                # evaluation
+                if (self.step % self.args.eval_every == 0) or (self.step == self.args.num_steps):
+                    # eval
+                    self.g_model.eval()
+                    self._eval_iteration(loader)
+                    self.g_model.train()
+
+            else:
+                # train
+                self._train_iteration(loader2)
+
+                # scheduler
+                self.g_scheduler.step(epoch=self.step)
+                self.d_scheduler.step(epoch=self.step)
+
+                # evaluation
+                if (self.step % self.args.eval_every == 0) or (self.step == self.args.num_steps):
+                    # eval
+                    self.g_model.eval()
+                    self._eval_iteration(loader2)
+                    self.g_model.train()
 
         # sample last
         self.step += 1
         self._sample_iteration(loader)
-
-        # run step iterations
-        logging.info('\nScale #{}'.format(self.scale + 1))
-        for self.step in range(self.args.num_steps, 2*self.args.num_steps + 1):
-            # train
-            self._train_iteration(loader2)
-
-            # scheduler
-            self.g_scheduler.step(epoch=self.step)
-            self.d_scheduler.step(epoch=self.step)
-
-            # evaluation
-            if (self.step % self.args.eval_every == 0) or (self.step == self.args.num_steps):
-                # eval
-                self.g_model.eval()
-                self._eval_iteration(loader2)
-                self.g_model.train()
-
-        # sample last
-        self.step += 1
         self._sample_iteration(loader2)
+
 
     def _print_stats(self, loader):
         reals = loader.dataset.reals
