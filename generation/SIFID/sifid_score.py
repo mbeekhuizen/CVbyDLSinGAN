@@ -253,7 +253,7 @@ if __name__ == '__main__':
     sifid_values = calculate_sifid_given_paths(path1, path2, 1, args.gpu != '', 64, suffix)
     print(sifid_values)
     sifid_values = np.asarray(sifid_values, dtype=np.float32)
-    numpy.save('results/landscape/lake_128', sifid_values)
+    numpy.save('results/landscape/mountains_64.npy', sifid_values)
     print(sifid_values)
     print('SIFID mean score: ', sifid_values.mean())
     print('SIFID std: ', np.std(sifid_values))
