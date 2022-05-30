@@ -24,11 +24,11 @@ if __name__ == '__main__':
     for i in range(len(files1)):
         img_png1 = Image.open(files1[i])
         img_png1 = img_png1.convert('RGB')
-        img_png1.save(str(files1[i].parent) + "/" + files1[i].name[:-4] + '.jpg')
+        img_png1.save(str(files1[i].parent) + "/" + str(i) + '.jpg')
         os.remove(files1[i])
 
     for i in range(len(files2)):
         img_png2 = Image.open(files2[i])
         img_png2 = img_png2.convert('RGB')
-        img_png2.save(str(files2[i].parent) + "/" + files2[i].name[:-4] + '.jpg')
+        img_png2.save(str(files2[i].parent) + "/" + str(i) + '.jpg')
         os.remove(files2[i])

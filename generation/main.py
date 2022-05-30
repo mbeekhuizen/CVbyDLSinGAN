@@ -31,7 +31,7 @@ def get_arguments():
 
     parser.add_argument('--batch-size', default=1, type=int, help='batch-size (default: 1)')
     parser.add_argument('--crop-size', default=0, type=int, help='cropping-size of last scale (default: 0)')
-    parser.add_argument('--num-steps', default=4000, type=int, help='number of steps per scale (default: 4000)')
+    parser.add_argument('--num-steps', default=2000, type=int, help='number of steps per scale (default: 4000)')
     parser.add_argument('--lr', default=5e-4, type=float, help='learning rate (default: 5e-4)')
     parser.add_argument('--gen-betas', default=[0.5, 0.9], nargs=2, type=float, help='adam betas (default: 0.5 0.9)')
     parser.add_argument('--dis-betas', default=[0.5, 0.9], nargs=2, type=float, help='adam betas (default: 0.5 0.9)')
